@@ -54,6 +54,7 @@ func requestHandler(w http.ResponseWriter, req *http.Request) {
 			log.Fatal(err)
 		}
 		w.Header().Set("content-type", "application/json;charset=UTF-8")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		fmt.Fprint(w, string(responseJson))
 	} else if req.URL.Path != clientPath && req.URL.Path != serverPath {
 		http.Error(w, "404 Not Found", http.StatusNotFound)
