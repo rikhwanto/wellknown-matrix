@@ -2,23 +2,29 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
+
+	petname "github.com/dustinkirkland/golang-petname"
 )
 
-var wrongPaths = []string{
-	"/.well-known/matrix/somewhere",
-	"/.well-known/matrixes/client",
-	"/.well-knowna/matrixes/client",
-	"/well-known/matrix/client",
-	"/wellknown/matrix/client",
-	"/well-known/matrix/clients",
-	"/.well-known/matrix/servers",
-	"/randomhere",
-	"/",
+func generateWrongPaths(limit int) []string {
+	var result = []string{"/"}
+	rand.Seed(time.Now().UnixNano())
+	for i := 1; i <= limit; i++ {
+		perLimit := rand.Intn(25)
+		for j := 0; j < perLimit; j++ {
+			result = append(result, fmt.Sprintf("/%s", petname.Generate(i, "/")))
+		}
+
+	}
+	return result
 }
 
 var wrongMethods = []string{
@@ -58,6 +64,7 @@ var serverList = []serverCombination{
 }
 
 func TestWrongPath(t *testing.T) {
+	wrongPaths := generateWrongPaths(10)
 	for _, test := range wrongPaths {
 		req := httptest.NewRequest(http.MethodGet, test, nil)
 		w := httptest.NewRecorder()
