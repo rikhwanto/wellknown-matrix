@@ -61,6 +61,17 @@ func generateClientServerLists(limit int) []serverCombination {
 	return result
 }
 
+func generateFederationServerLists(limit int) []string {
+	var result []string
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < limit; i++ {
+		federationDomain := petname.Generate(2, ".")
+		federationPort := rand.Intn(65536)
+		result = append(result, fmt.Sprintf("%s:%d", federationDomain, federationPort))
+	}
+	return result
+}
+
 var clientPath = "/.well-known/matrix/client"
 var serverPath = "/.well-known/matrix/server"
 
@@ -97,6 +108,38 @@ func TestWrongMethod(t *testing.T) {
 		t.Logf("Received status code %d at wrong method %s", result.StatusCode, test)
 		if result.StatusCode != http.StatusNotFound {
 			t.Errorf("Wrong status code at wrong method at method %s with status code %d", test, result.StatusCode)
+		}
+	}
+}
+
+func TestFederation(t *testing.T) {
+	federationServerList := generateFederationServerLists(50)
+	for _, testNow := range federationServerList {
+		os.Setenv("FEDERATION_SERVER", testNow)
+		var header = headerCombination{"content-type", "application/json;charset=UTF-8"}
+		req := httptest.NewRequest(http.MethodGet, serverPath, nil)
+		w := httptest.NewRecorder()
+		requestHandler(w, req)
+		result := w.Result()
+		if result.StatusCode != http.StatusOK {
+			t.Errorf("Wrong status code with status code %d that should be 200", result.StatusCode)
+		}
+		if headerValue := result.Header.Get(header.header); headerValue != header.value {
+			t.Errorf("Wrong header received at client at header %s with response %s that should be %s",
+				header.header, headerValue, header.value)
+		}
+		defer result.Body.Close()
+		data, err := ioutil.ReadAll(result.Body)
+		if err != nil {
+			t.Errorf("Expected error to be nil got %v", err)
+		}
+		var federationResponse ServerResponse
+		err = json.Unmarshal(data, &federationResponse)
+		if err != nil {
+			t.Errorf("Expected error to be nil got %v", err)
+		}
+		if value := federationResponse.Server; value != testNow {
+			t.Errorf("Wrong federation server received, should be %s but got %s", testNow, value)
 		}
 	}
 }
