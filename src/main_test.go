@@ -101,7 +101,7 @@ func TestWrongMethod(t *testing.T) {
 	}
 }
 
-func TestMultipleWithIdentityServer(t *testing.T) {
+func TestClient(t *testing.T) {
 	clientServerList := generateServerLists(15)
 	for _, testNow := range clientServerList {
 		var headerList = []headerCombination{
