@@ -14,6 +14,18 @@ import (
 	petname "github.com/dustinkirkland/golang-petname"
 )
 
+type headerCombination struct {
+	header, value string
+}
+
+type urlCombination struct {
+	url, value string
+}
+
+type serverCombination struct {
+	homeserver, identityserver urlCombination
+}
+
 func generateWrongPaths(limit int) []string {
 	var result = []string{"/"}
 	rand.Seed(time.Now().UnixNano())
@@ -27,41 +39,30 @@ func generateWrongPaths(limit int) []string {
 	return result
 }
 
-var wrongMethods = []string{
-	http.MethodConnect,
-	http.MethodDelete,
-	http.MethodHead,
-	http.MethodOptions,
-	http.MethodPatch,
-	http.MethodPost,
-	http.MethodPut,
-	http.MethodTrace,
+func generateServerLists(limit int) []serverCombination {
+	var result []serverCombination
+	rand.Seed(time.Now().UnixNano())
+	var protocols = []string{"https", "http"}
+	envHome := "CLIENT_HOMESERVER"
+	envIdentity := "CLIENT_IDENTITYSERVER"
+	for i := 0; i < limit; i++ {
+		for _, homeProtocol := range protocols {
+			for _, identityProtocol := range protocols {
+				homeDomain := petname.Generate(2, ".")
+				identityDomain := petname.Generate(2, ".")
+				temp := serverCombination{
+					homeserver:     urlCombination{envHome, fmt.Sprintf("%s://%s", homeProtocol, homeDomain)},
+					identityserver: urlCombination{envIdentity, fmt.Sprintf("%s://%s", identityProtocol, identityDomain)},
+				}
+				result = append(result, temp)
+			}
+		}
+	}
+	return result
 }
 
 var clientPath = "/.well-known/matrix/client"
-
-type headerCombination struct {
-	header, value string
-}
-
-type urlCombination struct {
-	url, value string
-}
-
-type serverCombination struct {
-	homeserver, identityserver urlCombination
-}
-
-var serverList = []serverCombination{
-	{homeserver: urlCombination{"CLIENT_HOMESERVER", "rando"},
-		identityserver: urlCombination{"CLIENT_IDENTITYSERVER", "rando2"}},
-	{homeserver: urlCombination{"CLIENT_HOMESERVER", "rando3"},
-		identityserver: urlCombination{"CLIENT_IDENTITYSERVER", "rando4"}},
-	{homeserver: urlCombination{"CLIENT_HOMESERVER", "rando5"},
-		identityserver: urlCombination{"CLIENT_IDENTITYSERVER", "rando6"}},
-	{homeserver: urlCombination{"CLIENT_HOMESERVER", "rando5:444"},
-		identityserver: urlCombination{"CLIENT_IDENTITYSERVER", "rando6:4321"}},
-}
+var serverPath = "/.well-known/matrix/server"
 
 func TestWrongPath(t *testing.T) {
 	wrongPaths := generateWrongPaths(10)
@@ -77,6 +78,16 @@ func TestWrongPath(t *testing.T) {
 }
 
 func TestWrongMethod(t *testing.T) {
+	var wrongMethods = []string{
+		http.MethodConnect,
+		http.MethodDelete,
+		http.MethodHead,
+		http.MethodOptions,
+		http.MethodPatch,
+		http.MethodPost,
+		http.MethodPut,
+		http.MethodTrace,
+	}
 	for _, test := range wrongMethods {
 		req := httptest.NewRequest(test, clientPath, nil)
 		w := httptest.NewRecorder()
@@ -89,7 +100,8 @@ func TestWrongMethod(t *testing.T) {
 }
 
 func TestMultipleWithIdentityServer(t *testing.T) {
-	for _, testNow := range serverList {
+	clientServerList := generateServerLists(15)
+	for _, testNow := range clientServerList {
 		var headerList = []headerCombination{
 			{"Access-Control-Allow-Origin", "*"},
 			{"content-type", "application/json;charset=UTF-8"},
