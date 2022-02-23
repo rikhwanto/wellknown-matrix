@@ -39,7 +39,7 @@ func generateWrongPaths(limit int) []string {
 	return result
 }
 
-func generateServerLists(limit int) []serverCombination {
+func generateClientServerLists(limit int) []serverCombination {
 	var result []serverCombination
 	rand.Seed(time.Now().UnixNano())
 	var protocols = []string{"https", "http"}
@@ -102,7 +102,7 @@ func TestWrongMethod(t *testing.T) {
 }
 
 func TestClient(t *testing.T) {
-	clientServerList := generateServerLists(15)
+	clientServerList := generateClientServerLists(15)
 	for _, testNow := range clientServerList {
 		var headerList = []headerCombination{
 			{"Access-Control-Allow-Origin", "*"},
