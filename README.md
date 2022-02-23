@@ -31,7 +31,7 @@ This is an example of how to setup the reverse proxy using Nginx. You can add so
     # other configuration
 
     location /.well-known/matrix {
-        proxy_pass http://wellknown-matrix/.well-known/matrix
+        proxy_pass http://wellknown-matrix:8080/.well-known/matrix
     }
 
     # other configuration
