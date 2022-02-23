@@ -71,6 +71,7 @@ func TestWrongPath(t *testing.T) {
 		w := httptest.NewRecorder()
 		requestHandler(w, req)
 		result := w.Result()
+		t.Logf("Received status code %d at wrong path %s", result.StatusCode, test)
 		if result.StatusCode != http.StatusNotFound {
 			t.Errorf("Wrong status code at wrong path at path %s with status code %d", test, result.StatusCode)
 		}
@@ -93,6 +94,7 @@ func TestWrongMethod(t *testing.T) {
 		w := httptest.NewRecorder()
 		requestHandler(w, req)
 		result := w.Result()
+		t.Logf("Received status code %d at wrong method %s", result.StatusCode, test)
 		if result.StatusCode != http.StatusNotFound {
 			t.Errorf("Wrong status code at wrong method at method %s with status code %d", test, result.StatusCode)
 		}
