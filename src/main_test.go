@@ -21,6 +21,17 @@ var wrongPaths = []string{
 	"/",
 }
 
+var wrongMethods = []string{
+	http.MethodConnect,
+	http.MethodDelete,
+	http.MethodHead,
+	http.MethodOptions,
+	http.MethodPatch,
+	http.MethodPost,
+	http.MethodPut,
+	http.MethodTrace,
+}
+
 var clientPath = "/.well-known/matrix/client"
 
 type headerCombination struct {
@@ -54,6 +65,18 @@ func TestWrongPath(t *testing.T) {
 		result := w.Result()
 		if result.StatusCode != http.StatusNotFound {
 			t.Errorf("Wrong status code at wrong path at path %s with status code %d", test, result.StatusCode)
+		}
+	}
+}
+
+func TestWrongMethod(t *testing.T) {
+	for _, test := range wrongMethods {
+		req := httptest.NewRequest(test, clientPath, nil)
+		w := httptest.NewRecorder()
+		requestHandler(w, req)
+		result := w.Result()
+		if result.StatusCode != http.StatusNotFound {
+			t.Errorf("Wrong status code at wrong method at method %s with status code %d", test, result.StatusCode)
 		}
 	}
 }
