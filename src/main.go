@@ -16,6 +16,7 @@ type jsonURL struct {
 type ClientResponse struct {
 	Homeserver     jsonURL  `json:"m.homeserver"`
 	IdentityServer *jsonURL `json:"m.identity_server,omitempty"`
+	SyncServer     *jsonURL `json:"org.matrix.msc3575.proxy,omitempty"`
 }
 
 type ServerResponse struct {
@@ -37,11 +38,15 @@ func composeServerResponse() string {
 func composeClientResponse() string {
 	homeserverURL := os.Getenv("CLIENT_HOMESERVER")
 	identityServerURL := os.Getenv("CLIENT_IDENTITYSERVER")
+	syncServerURL := os.Getenv("CLIENT_SLIDINGSYNCSERVER")
 	client := ClientResponse{
 		Homeserver: jsonURL{BaseURL: homeserverURL},
 	}
 	if identityServerURL != "" {
 		client.IdentityServer = &jsonURL{BaseURL: identityServerURL}
+	}
+	if syncServerURL != "" {
+		client.SyncServer = &jsonURL{RawURL: syncServerURL}
 	}
 	responseJson, err := json.Marshal(client)
 	if err != nil {
